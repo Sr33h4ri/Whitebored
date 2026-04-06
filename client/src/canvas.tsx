@@ -1,22 +1,56 @@
-import { Stage,Layer,Rect} from "react-konva"
+import { Stage, Layer, Line } from "react-konva"
+import { useEffect, useState } from 'react';
+import useBrushTool from './BrushTool'
 
+type LineType = {
+  points: number[];
+  tool: 'brush' | 'eraser';
+}
 
 function Canvas() {
-  return (
-    <Stage width={visualViewport?.width} height={visualViewport?.width}>
+    const [activeTool, setActiveTool] = useState<'brush' | 'eraser'>('brush');
+    const { lines, handleMouseDown, handleMouseMove, handleMouseUp } = useBrushTool(activeTool);
+
+    useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.key === 'e') {
+                setActiveTool('eraser')
+            } else if (e.key === 'b') {
+                setActiveTool('brush')
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyPress)
+        return () => window.removeEventListener('keydown', handleKeyPress)
+    }, [])
+
+    const width = visualViewport?.width ?? window.innerWidth
+    const height = visualViewport?.height ?? window.innerHeight
+
+    return (
+    <Stage width={width} height={height}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        >
         <Layer>
-            <Rect
-                x={20}
-                y={50}
-                width={100}
-                height={100}
-                fill="red"
-                draggable/>
+            {lines.map((line, i) => (
+          <Line
+            key={i}
+            points={line.points}
+            stroke="#df4b26"
+            strokeWidth={5}
+            tension={0.5}
+            lineCap="round"
+            lineJoin="round"
+            listening={false}
+            globalCompositeOperation={line.tool === 'eraser' ? 'destination-out' : 'source-over'}
+          />
+           ))}
         </Layer>
     </Stage>
   )
 }
-
 
 export default Canvas
 
